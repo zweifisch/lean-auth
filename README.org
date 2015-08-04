@@ -1,0 +1,29 @@
+
+** features
+
+- username/password login
+- ldap support
+- email verification
+- password lost and fund using email
+- role/permission management
+
+** api
+
+t.grant(id, "role", "more");
+t.revoke(id, "role", "more");
+
+t.create({login: login}, verifyEmail);
+t.disable(id);
+t.enable(id);
+t.remove(id);
+t.update(id, meta);
+
+t.login(login, password);
+
+t.verifyEmail(id);  // send verification email
+t.forgetPassword(id);  // send reset password email
+
+t.getUser(id)
+
+** db schema
+   
