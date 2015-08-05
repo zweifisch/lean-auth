@@ -19,8 +19,10 @@ describe "user", ->
                     email: "test@test.com"
                     password: "pass"
             setup.then(create).then ->
-                login(name:"test", "pass").should.eventually.equal yes
-                
+                login(name:"test", "pass").then (user)->
+                    user.name
+                .should.eventually.equal "test"
+
         it "should change password", ->
             create = ->
                 createUser
@@ -30,13 +32,13 @@ describe "user", ->
             setup.then(create).then (user)->
                 auth.updatePassword(user, "pass2").then ->
                     Promise.all([
-                        login(name:"test2", "pass2"),
-                        login(name:"test2", "pass")
+                        login(name:"test2", "pass2").then(-> yes)
+                        login(name:"test2", "pass").catch(-> no)
                     ]).should.eventually.deep.equal [yes, no]
 
         it "should not login when user not exists", ->
             setup.then ->
-                login(name:"test0", "pass0").should.eventually.equal no
+                login(name:"test0", "pass0").should.be.rejected
 
         it "should not login when user is disabled", ->
             create = ->
@@ -46,7 +48,7 @@ describe "user", ->
                     password: "pass6"
             setup.then(create).then (user)->
                 auth.disableUser(user).then ->
-                    login(name:"test6", "pass6").should.eventually.equal no
+                    login(name:"test6", "pass6").should.be.rejected
 
         it "should delete user", ->
             create = ->
@@ -85,7 +87,7 @@ describe "user", ->
                     .then ({token})->
                         Promise.all([
                             auth.resetPasswordWithToken(token, "test77").then(->
-                                login name: "test7", "test77"
+                                login(name: "test7", "test77").then -> true
                             ),
                             auth.resetPasswordWithToken("invalid token", "test78").catch (err)->
                                 err instanceof errors.InvalidTokenError

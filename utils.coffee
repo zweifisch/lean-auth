@@ -1,7 +1,7 @@
 bcrypt = require 'bcrypt'
 crypto = require 'crypto'
 
-promisify = (f)-> 
+exports.promisify = promisify = (f)->
     (args...)->
         new Promise (resolve, reject)->
             f args..., (err, result)->

@@ -25,7 +25,7 @@ exports.setup = (url)->
                     isEmail: yes
             password:
                 type: CHAR(60)
-                allowNull: no
+                allowNull: yes
             enabled:
                 type: BOOLEAN
                 allowNull: no

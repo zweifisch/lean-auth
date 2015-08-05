@@ -51,5 +51,8 @@ grant(user, role);
 revoke(user, role);
 ```
 
+## ldap
+
+
+
 ## db schema
-   

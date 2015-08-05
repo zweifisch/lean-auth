@@ -1,15 +1,16 @@
 {setup} = require "./schema"
 {compare, hash, merge, gentoken} = require "./utils"
 errors = require "./errors"
+{getClient} = require "./ldap"
 
-# url = 'mysql://root:simple-passwd@127.0.0.1:3306/db9'
-
-exports.init = (url)->
+exports.init = (url, ldap)->
     db = setup url
     User = db.model 'user'
     Role = db.model 'role'
     PasswordResetRequest = db.model 'password_reset_request'
     EmailVerification = db.model 'email_verification'
+
+    ldap = getClient ldap if ldap?.url
 
     User: User
     Role: Role
@@ -23,12 +24,14 @@ exports.init = (url)->
                 email: email
                 password: hashed
 
+    # err | user
     login: (criteria, password)->
         User.findOne(where: criteria).then (user)->
-            if user and user.enabled
-                compare password, user.password
-            else
-                no
+            throw new errors.UserNotFoundError "login failed" unless user
+            throw new errors.UserDisabledError "login failed" unless user.enabled
+            compare(password, user.password).then (matched)->
+                throw new errors.PasswordMismatchError "login failed" unless matched
+                user
 
     updatePassword: updatePassword = (user, password)->
         hash(password).then (hashed)->
@@ -103,3 +106,8 @@ exports.init = (url)->
         User.destroy where: criteria, limit: 1
 
     sync: db.sync.bind db
+
+    ldapLogin: (username, passwd)->
+        throw Error "ldap url not provided" unless ldap
+        ldap(username, passwd).then (user)->
+            User.upsert(user).then -> user
