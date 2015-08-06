@@ -1,11 +1,11 @@
 {
-  "name": "user",
+  "name": "lean-auth",
   "version": "0.0.1",
   "description": "** features",
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --bail --compilers js:coffee-script/register test.coffee",
-    "build": "./node_modules/coffee-script/bin/coffee-script -c *.coffee",
+    "build": "./node_modules/coffee-script/bin/coffee -c *.coffee",
     "prepublish": "npm run build"
   },
   "author": "zf",
@@ -13,13 +13,19 @@
   "dependencies": {
     "bcrypt": "^0.8.4",
     "ldapjs": "^0.7.1",
-    "mysql": "^2.8.0",
     "sequelize": "^3.5.1"
   },
   "devDependencies": {
     "chai": "^3.2.0",
     "chai-as-promised": "^5.1.0",
     "coffee-script": "^1.9.3",
-    "mocha": "^2.2.5"
-  }
+    "mocha": "^2.2.5",
+    "mysql": "^2.8.0",
+    "sqlite3": "^3.0.9"
+  },
+  "keywords": [
+    "auth",
+    "user",
+    "management"
+  ]
 }

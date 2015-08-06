@@ -5,7 +5,7 @@ promised = require "chai-as-promised"
 chai.use promised
 chai.should()
 
-auth = {sync, createUser, login, User, errors} = init process.env.DATABASE
+auth = {sync, createUser, login, User, errors} = init process.env.DATABASE_URL or "sqlite://:memory:"
 setup = sync force: yes
 
 describe "user", ->
@@ -56,8 +56,8 @@ describe "user", ->
                     name: "test3"
                     email: "test@test3.com"
                     password: "pass"
-            setup.then(create).then ->
-                auth.deleteUser(name: "test3").then ->
+            setup.then(create).then (user)->
+                auth.deleteUser(user.id).then ->
                     auth.findUser(name:"test3").then (user)->
                         auth.findUser(name:"test3").should.eventually.equal null
 
@@ -138,3 +138,47 @@ describe "user", ->
                     .then (roles)->
                         roles.map ({name})-> name
                     .should.eventually.deep.equal ["admin"]
+
+        it "should get role", ->
+            create = -> Promise.all([
+                createUser
+                    name: "test10"
+                    email: "test@test10.com"
+                    password: "pass10"
+                auth.createRole
+                    name: "operator"
+            ])
+            setup.then(create).then ([user, role])->
+                auth.grant(user, role).then ->
+                    auth.getUser(user.id).then (user)->
+                        user.roles.map (x)-> x.name
+                    .should.eventually.deep.equal ["operator"]
+
+        it "should fetch policy", ->
+            resource = auth.Resource.create
+                name: "article"
+
+            editor = auth.Role.create
+                name: "editor"
+
+            subscriber = auth.Role.create
+                name: "subscriber"
+
+            Promise.all([resource, editor, subscriber]).then ([resource, editor, subscriber])->
+                actions = ["create", "read", "update", "delete"].map (action)->
+                    resource.createAction name: action
+
+                Promise.all(actions).then ([c,r,u,d])->
+                    Promise.all [
+                        c.addRole(editor, allowed: yes)
+                        r.addRoles([editor, subscriber], allowed: yes)
+                        u.addRole(editor, allowed: yes)
+                    ]
+
+                .then ->
+                    auth.getPolicy().should.eventually.deep.equal
+                        article:
+                            create: ["editor"]
+                            read: ["editor", "subscriber"]
+                            update: ["editor"]
+                            delete: []

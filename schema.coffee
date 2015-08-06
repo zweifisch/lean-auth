@@ -45,6 +45,7 @@ exports.setup = (url)->
         schema:
             name:
                 type: STRING
+                unique: yes
                 allowNull: no
             description:
                 type: STRING
@@ -59,8 +60,6 @@ exports.setup = (url)->
         options:
             underscored: yes
             timestamps: yes
-
-    User.belongsToMany(Role, { through: RoleAssignment});
 
     PasswordResetRequest = define "password_reset_request",
         schema:
@@ -89,5 +88,55 @@ exports.setup = (url)->
         options:
             underscored: yes
             timestamps: yes
+
+    Resource = define "resource",
+        schema:
+            name:
+                type: STRING
+                unique: yes
+                allowNull: no
+                validate:
+                    is: /^[a-z0-9_.-]+$/i
+                    len: [1,32]
+            description:
+                type: STRING
+                allowNull: yes
+        options:
+            timestamps: yes
+            underscored: yes
+            paranoid: yes
+
+    Action = define "action",
+        schema:
+            name:
+                type: STRING
+                unique: yes
+                allowNull: no
+                validate:
+                    is: /^[a-z0-9_.-]+$/i
+                    len: [1,32]
+            description:
+                type: STRING
+                allowNull: yes
+        options:
+            timestamps: yes
+            underscored: yes
+            paranoid: yes
+
+    Rule = define "rule",
+        schema:
+            allowed:
+                type: BOOLEAN
+                allowNull: no
+                defaultValue: yes
+        options:
+            underscored: yes
+            timestamps: yes
+
+    User.belongsToMany Role, through: RoleAssignment
+
+    Resource.hasMany Action
+
+    Action.belongsToMany Role, through: Rule
 
     sequelize
