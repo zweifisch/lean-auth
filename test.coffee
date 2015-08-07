@@ -69,10 +69,11 @@ describe "user", ->
                     password: "pass4"
             setup.then(create).then (user)->
                 auth.getPasswordResetToken("test@test4.com").then ({token})->
-                    auth.PasswordResetRequest.findOne
-                        where: userId: user.id
-                    .then (request)-> request.token
-                    .should.eventually.equal token
+                    user.getPasswordResetRequests
+                        where: token: token
+                    .then (requests)->
+                        requests.length
+                    .should.eventually.equal 1
 
         it "should reset password with valid token", ->
             create = ->
@@ -81,18 +82,14 @@ describe "user", ->
                     email: "test@test7.com"
                     password: "pass7"
             setup.then(create).then (user)->
-                auth.getPasswordResetToken("test@test7.com").then ({token})->
-                    auth.PasswordResetRequest.findOne
-                        where: userId: user.id
-                    .then ({token})->
-                        Promise.all([
-                            auth.resetPasswordWithToken(token, "test77").then(->
-                                login(name: "test7", "test77").then -> true
-                            ),
-                            auth.resetPasswordWithToken("invalid token", "test78").catch (err)->
-                                err instanceof errors.InvalidTokenError
-                        ])
-                    .should.eventually.deep.equal [yes, yes]
+                auth.getPasswordResetToken("test@test7.com").then (token)->
+                    Promise.all([
+                        auth.resetPasswordWithToken(token.token, "test77").then(->
+                            login(name: "test7", "test77").then -> true
+                        ),
+                        auth.resetPasswordWithToken("invalid token", "test78").catch (err)->
+                            err instanceof errors.InvalidTokenError
+                    ]).should.eventually.deep.equal [yes, yes]
 
         it "should compare old password when reset a password", ->
             create = ->
@@ -114,9 +111,9 @@ describe "user", ->
                     email: "test@test8.com"
                     password: "pass8"
             setup.then(create).then (user)->
-                auth.getEmailVerificationToken(user).then ({token})->
+                auth.getEmailVerificationToken(user).then (token)->
                     Promise.all([
-                        auth.verifyEmailWithToken(token).then (user)-> user.verified
+                        auth.verifyEmailWithToken(token.token).then (user)-> user.verified
                         auth.resetPasswordWithToken("invalid token").catch (err)->
                             err instanceof errors.InvalidTokenError
                     ])
@@ -153,6 +150,12 @@ describe "user", ->
                     auth.getUser(user.id).then (user)->
                         user.roles.map (x)-> x.name
                     .should.eventually.deep.equal ["operator"]
+
+        it "should ensure role", ->
+            setup.then ->
+                auth.ensureRole("root").then (role)->
+                    role.name
+                .should.eventually.equal "root"
 
         it "should fetch policy", ->
             resource = auth.Resource.create

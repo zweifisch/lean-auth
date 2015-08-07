@@ -8,8 +8,8 @@ exports.init = (url, ldap)->
 
     User = db.model 'user'
     Role = db.model 'role'
-    PasswordResetRequest = db.model 'password_reset_request'
-    EmailVerification = db.model 'email_verification'
+    PasswordResetRequest = db.model 'passwordResetRequest'
+    EmailVerification = db.model 'emailVerification'
     Resource = db.model 'resource'
     Action = db.model 'action'
 
@@ -21,6 +21,7 @@ exports.init = (url, ldap)->
     id2user = id2model User
     id2role = id2model Role
     id2resource = id2model Resource
+    id2action = id2model Action
 
     destroyById = (model)-> (id)->
         model.destroy
@@ -45,7 +46,7 @@ exports.init = (url, ldap)->
 
     # err | user
     login: (criteria, password)->
-        User.findOne(where: criteria).then (user)->
+        User.findOne({where: criteria, include: Role}).then (user)->
             throw new errors.UserNotFoundError "login failed, user not found" unless user
             throw new errors.UserDisabledError "login failed, user disabled" unless user.enabled
             compare(password, user.password).then (matched)->
@@ -61,21 +62,16 @@ exports.init = (url, ldap)->
         User.findOne(where: email: email).then (user)->
             if user
                 gentoken(32).then (token)->
-                    PasswordResetRequest.create
-                        userId: user.id
-                        token: token
-                    .then ->
-                        user: user
-                        token: token
+                    user.createPasswordResetRequest token: token
             else
-                throw new errors.UserNotExitError "user not found"
+                throw new errors.UserNotExistError "user not found"
 
     # err | user
     resetPasswordWithToken: (token, newpasswd)->
         PasswordResetRequest.findOne(where: token: token).then (request)->
             throw new errors.InvalidTokenError "token invalid" unless request
-            User.findById(request.userId).then (user)->
-                throw new errors.UserNotExitError "user not found" unless user
+            request.getUser().then (user)->
+                throw new errors.UserNotExistError "user not found" unless user
                 updatePassword user, newpasswd
 
     resetPassword: (user, oldpasswd, newpasswd)->
@@ -86,16 +82,14 @@ exports.init = (url, ldap)->
     # err | {token}
     getEmailVerificationToken: (user)->
         gentoken(32).then (token)->
-            EmailVerification.create
-                userId: user.id
-                token: token
+            user.createEmailVerification token: token
 
     # err | user
     verifyEmailWithToken: (token)->
         EmailVerification.findOne(where: token: token).then (request)->
             throw new errors.InvalidTokenError "token invalid" unless request
-            User.findById(request.userId).then (user)->
-                throw new errors.UserNotExitError "user not found" unless user
+            request.getUser().then (user)->
+                throw new errors.UserNotExistError "user not found" unless user
                 user.set "verified", yes
                 user.save()
 
@@ -134,6 +128,10 @@ exports.init = (url, ldap)->
         Role.create
             name: name
             description: description
+
+    ensureRole: (name)->
+        Role.upsert(name: name).then ->
+            Role.findOne where: name: name
 
     findUser: (criteria)->
         User.findOne where: criteria
@@ -192,6 +190,17 @@ exports.init = (url, ldap)->
                 name: name
                 description: description
 
+    updateAction: (action, {name, description, roles})->
+        id2action(action).then (action)->
+            action.set "name", name
+            action.set "description", description
+            action.save()
+        .then (action)->
+            if roles
+                action.setRoles roles
+
     deleteRole: destroyById Role
     deleteUser: destroyById User
     deleteResource: destroyById Resource
+
+    importPolicy: (policy)->

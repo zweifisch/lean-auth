@@ -8,6 +8,8 @@ exports.setup = (url)->
     define = (name, {schema, options})-> 
         sequelize.define name, schema, options
 
+    tbl = (name)-> "auth_#{name}"
+
     User = define "user",
         schema:
             name:
@@ -40,6 +42,7 @@ exports.setup = (url)->
             timestamps: yes
             underscored: yes
             paranoid: yes
+            tableName: tbl "users"
 
     Role = define "role",
         schema:
@@ -54,40 +57,37 @@ exports.setup = (url)->
             timestamps: yes
             underscored: yes
             paranoid: yes
+            tableName: tbl "roles"
 
-    RoleAssignment = define "role_assignment",
+    RoleAssignment = define "roleAssignment",
         schema: {}
         options:
+            paranoid: no
             underscored: yes
             timestamps: yes
+            tableName: tbl "role_assignments"
 
-    PasswordResetRequest = define "password_reset_request",
+    PasswordResetRequest = define "passwordResetRequest",
         schema:
-            userId:
-                type: INTEGER
-                model: User
-                key: "id"
-                field: "user_id"
             token:
                 type: CHAR(64)
                 allowNull: no
         options:
+            paranoid: no
             underscored: yes
             timestamps: yes
+            tableName: tbl "password_reset_requests"
 
-    EmailVerification = define "email_verification",
+    EmailVerification = define "emailVerification",
         schema:
-            userId:
-                type: INTEGER
-                model: User
-                key: "id"
-                field: "user_id"
             token:
                 type: CHAR(64)
                 allowNull: no
         options:
+            paranoid: no
             underscored: yes
             timestamps: yes
+            tableName: tbl "email_verifications"
 
     Resource = define "resource",
         schema:
@@ -105,6 +105,7 @@ exports.setup = (url)->
             timestamps: yes
             underscored: yes
             paranoid: yes
+            tableName: tbl "resources"
 
     Action = define "action",
         schema:
@@ -122,6 +123,7 @@ exports.setup = (url)->
             timestamps: yes
             underscored: yes
             paranoid: yes
+            tableName: tbl "actions"
 
     Rule = define "rule",
         schema:
@@ -132,11 +134,18 @@ exports.setup = (url)->
         options:
             underscored: yes
             timestamps: yes
+            tableName: tbl "rules"
 
     User.belongsToMany Role, through: RoleAssignment
 
     Resource.hasMany Action
 
     Action.belongsToMany Role, through: Rule
+
+    User.hasMany PasswordResetRequest
+    User.hasMany EmailVerification
+
+    PasswordResetRequest.belongsTo User
+    EmailVerification.belongsTo User
 
     sequelize
