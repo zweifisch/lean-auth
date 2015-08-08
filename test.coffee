@@ -5,7 +5,8 @@ promised = require "chai-as-promised"
 chai.use promised
 chai.should()
 
-auth = {sync, createUser, login, User, errors} = init process.env.DATABASE_URL or "sqlite://:memory:"
+auth = {sync, createUser, login, User, errors} = init
+    database: process.env.DATABASE_URL or "sqlite://:memory:"
 setup = sync force: yes
 
 describe "user", ->

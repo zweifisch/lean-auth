@@ -2,7 +2,7 @@
 ## features
 
 - username/password login
-- ldap support
+- ldap login
 - email verification
 - password lost and fund
 - role/permission management
@@ -53,6 +53,3 @@ revoke(user, role);
 
 ## ldap
 
-
-
-## db schema

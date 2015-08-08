@@ -1,10 +1,10 @@
-{setup} = require "./schema"
+{setup} = require "./db"
 {compare, hash, merge, gentoken} = require "./utils"
 errors = require "./errors"
 {getClient} = require "./ldap"
 
-exports.init = (url, ldap)->
-    db = setup url
+exports.init = ({database, prefix, ldap})->
+    db = setup database, prefix or "auth"
 
     User = db.model 'user'
     Role = db.model 'role'
