@@ -209,3 +209,27 @@ describe "user", ->
                         delete: []
                     thing:
                         create: ["creator"]
+
+        it "should import policy", ->
+
+            policy =
+                article:
+                    create: ["editor", "subscriber"]
+                user:
+                    manage: ["hr"]
+                more:
+                    action: ["role"]
+
+            auth.importPolicy(policy).then ->
+                auth.getPolicy().should.eventually.deep.equal
+                    article:
+                        create: ["editor", "subscriber"]
+                        read: ["subscriber"]
+                        update: ["editor"]
+                        delete: []
+                    thing:
+                        create: ["creator"]
+                    user:
+                        manage: ["hr"]
+                    more:
+                        action: ["role"]

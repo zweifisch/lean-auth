@@ -13,7 +13,8 @@
   "dependencies": {
     "bcrypt": "^0.8.4",
     "ldapjs": "^0.7.1",
-    "sequelize": "^3.5.1"
+    "sequelize": "^3.5.1",
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
     "chai": "^3.2.0",

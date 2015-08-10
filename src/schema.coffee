@@ -56,14 +56,17 @@ module.exports =
             type: STRING
             allowNull: yes
 
-    name:
+    action:
         name:
             type: STRING
-            unique: no
+            unique: "action"
             allowNull: no
             validate:
                 is: /^[a-z0-9_.-]+$/i
                 len: [1,32]
+        resource_id:
+            type: INTEGER
+            unique: "action"
         description:
             type: STRING
             allowNull: yes

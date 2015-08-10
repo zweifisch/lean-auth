@@ -2,6 +2,7 @@
 {compare, hash, merge, gentoken} = require "./utils"
 errors = require "./errors"
 {getClient} = require "./ldap"
+_ = require "underscore"
 
 
 id2model = (model)-> (maybeId)->
@@ -191,6 +192,7 @@ class Auth
                 where:
                     name: resource
 
+    # err | bool
     addRule: (role, action, resource)->
         Promise.all([
             @getAction resource, action
@@ -201,6 +203,7 @@ class Auth
             else
                 throw new Error "action #{resource}:#{action} not found"
 
+    # err | bool
     removeRule: (role, action, resource)->
         Promise.all([
             @getAction resource, action
@@ -215,10 +218,11 @@ class Auth
         @Resource.findById id, include: [model: @Action, include: @Role]
 
     createAction: (resource, {name, description})->
-        @id2resource(resource).then (resource)->
-            resource.createAction
-                name: name
-                description: description
+        id = resource?.id or resource
+        @Action.upsert
+            resource_id: id
+            name: name
+            description: description
 
     updateAction: (action, {name, description, roles})->
         @id2action(action).then (action)->
@@ -230,9 +234,26 @@ class Auth
                 action.setRoles roles
 
     importPolicy: (policy)->
-        @addRule role, action, resource
+        rolesP = Promise.all (_.unique _.flatten _.values(policy).map _.values).map (role)=>
+            @Role.upsert name: role
 
-    sync: -> @db.sync()
+        actionsP = Promise.all _.pairs(policy).map ([res, actions])=>
+            @Resource.upsert(name: res).then =>
+                @Resource.findOne where: name: res
+            .then (resource)=>
+                Promise.all Object.keys(actions).map (action)=>
+                    @createAction resource, name: action
+
+        flatten = (list)-> _.flatten list, yes
+
+        rules = flatten _.pairs(policy).map ([res, actions])->
+            flatten _.pairs(actions).map ([action, roles])->
+                roles.map (role)-> [role, action, res]
+
+        Promise.all([rolesP, actionsP]).then =>
+            Promise.all rules.map (rule)=> @addRule rule...
+
+    sync: (args...)-> @db.sync args...
 
 
 module.exports = 

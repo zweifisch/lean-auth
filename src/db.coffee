@@ -43,7 +43,7 @@ exports.setup = (url, prefix)->
         paranoid: yes
         tableName: tbl "resources"
 
-    Action = sequelize.define "action", schema.name,
+    Action = sequelize.define "action", schema.action,
         timestamps: yes
         underscored: yes
         paranoid: yes
