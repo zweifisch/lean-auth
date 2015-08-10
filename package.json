@@ -28,5 +28,13 @@
     "auth",
     "user",
     "management"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zweifisch/lean-auth.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zweifisch/lean-auth/issues"
+  },
+  "homepage": "https://github.com/zweifisch/lean-auth"
 }
