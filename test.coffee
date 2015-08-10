@@ -1,6 +1,6 @@
 chai = require 'chai'
 promised = require "chai-as-promised"
-{init} = require "./index"
+{init} = require "./src"
 
 chai.use promised
 chai.should()
@@ -158,7 +158,10 @@ describe "user", ->
                     role.name
                 .should.eventually.equal "root"
 
+    describe "policy", ->
+
         it "should fetch policy", ->
+
             resource = auth.Resource.create
                 name: "article"
 
@@ -186,3 +189,36 @@ describe "user", ->
                             read: ["editor", "subscriber"]
                             update: ["editor"]
                             delete: []
+
+        it "should add rule", ->
+
+            Promise.all([
+                auth.Resource.create name: "thing"
+                auth.Role.create name: "creator"
+            ]).then ([thing])->
+                thing.createAction name: "create"
+            .then ->
+                auth.addRule("creator", "create", "thing")
+
+            .then ->
+                auth.getPolicy().should.eventually.deep.equal
+                    article:
+                        create: ["editor"]
+                        read: ["editor", "subscriber"]
+                        update: ["editor"]
+                        delete: []
+                    thing:
+                        create: ["creator"]
+
+        it "should remove rule", ->
+
+            auth.removeRule("editor", "read", "article").then ->
+
+                auth.getPolicy().should.eventually.deep.equal
+                    article:
+                        create: ["editor"]
+                        read: ["subscriber"]
+                        update: ["editor"]
+                        delete: []
+                    thing:
+                        create: ["creator"]

@@ -124,6 +124,9 @@ exports.init = ({database, prefix, ldap})->
     listRole: (criteria)->
         Role.findAll criteria
 
+    getRole: (id)->
+        Role.findById id
+
     createRole: ({name, description})->
         Role.create
             name: name
@@ -180,6 +183,35 @@ exports.init = ({database, prefix, ldap})->
                     actions[action.name] = action.roles.map (x)-> x.name
                 ret[res.name] = actions
             ret
+
+    getAction: getAction = (resource, action)->
+        Action.findOne
+            where:
+                name: action
+            include:
+                model: Resource
+                where:
+                    name: resource
+
+    addRule: (role, action, resource)->
+        Promise.all([
+            getAction resource, action
+            Role.findOne where: name: role
+        ]).then ([action_, role])->
+            if action_ and role
+                action_.addRole(role).then (count)-> count is 1
+            else
+                throw new Error "action #{resource}:#{action} not found"
+
+    removeRule: (role, action, resource)->
+        Promise.all([
+            getAction resource, action
+            Role.findOne where: name: role
+        ]).then ([action_, role])->
+            if action_ and role
+                action_.removeRole(role).then (count)-> count is 1
+            else
+                throw new Error "action #{resource}:#{action} not found"
 
     getResource: (id)->
         Resource.findById id, include: [model: Action, include: Role]

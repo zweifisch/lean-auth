@@ -57,8 +57,10 @@ exports.setup = (url, prefix)->
     User.belongsToMany Role, through: RoleAssignment
 
     Resource.hasMany Action
+    Action.belongsTo Resource
 
     Action.belongsToMany Role, through: Rule
+    Role.belongsToMany Action, through: Rule
 
     User.hasMany PasswordResetRequest
     User.hasMany EmailVerification
