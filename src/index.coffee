@@ -141,7 +141,13 @@ class Auth
         @User.findOne where: criteria
 
     listUser: (criteria)->
-        @User.findAll criteria
+        include =
+            model: @Role
+            attributes: ["name"]
+            required: no
+        if criteria?.role
+            include.where = criteria.role
+        @User.findAll _.extend {include: include}, _.omit criteria, "role",
 
     getUser: (id)->
         @User.findById id, include: @Role
